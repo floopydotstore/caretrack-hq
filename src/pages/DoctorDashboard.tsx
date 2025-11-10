@@ -3,7 +3,7 @@ import { User, Doctor, Patient, VisitRecord } from '@/types';
 import { Header } from '@/components/layout/Header';
 import { StatsCard } from '@/components/layout/StatsCard';
 import { mockDoctors, mockPatients, mockVisitRecords } from '@/lib/mockData';
-import { Users, FileText, Plus, AlertCircle } from 'lucide-react';
+import { Users, FileText, Plus, AlertCircle, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -41,39 +41,57 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
   const [visitRecords, setVisitRecords] = useState<VisitRecord[]>(
     mockVisitRecords.filter(v => v.doctorId === currentDoctor.id)
   );
+  const [patientSearchQuery, setPatientSearchQuery] = useState('');
+  const [visitSearchQuery, setVisitSearchQuery] = useState('');
 
   const canAddMore = currentDoctor.isSubscribed || patients.length < 3;
   const totalVisits = visitRecords.length;
+
+  const filteredPatients = patients.filter(patient =>
+    patient.name.toLowerCase().includes(patientSearchQuery.toLowerCase()) ||
+    patient.email.toLowerCase().includes(patientSearchQuery.toLowerCase()) ||
+    patient.phone.includes(patientSearchQuery) ||
+    patient.cnic.includes(patientSearchQuery)
+  );
+
+  const filteredVisitRecords = visitRecords.filter(record => {
+    const patient = patients.find(p => p.id === record.patientId);
+    return (
+      record.disease.toLowerCase().includes(visitSearchQuery.toLowerCase()) ||
+      record.medicineGiven.toLowerCase().includes(visitSearchQuery.toLowerCase()) ||
+      patient?.name.toLowerCase().includes(visitSearchQuery.toLowerCase())
+    );
+  });
 
   return (
     <div className="min-h-screen bg-background">
       <Header user={user} onLogout={onLogout} />
       
-      <main className="container mx-auto px-6 py-8">
-        <div className="mb-8 flex items-center justify-between">
+      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold mb-2">Doctor Dashboard</h2>
-            <p className="text-muted-foreground">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-2">Doctor Dashboard</h2>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage your patients and visit records
             </p>
           </div>
-          <Badge variant={currentDoctor.isSubscribed ? 'default' : 'secondary'} className="text-sm px-4 py-2">
+          <Badge variant={currentDoctor.isSubscribed ? 'default' : 'secondary'} className="text-xs sm:text-sm px-3 sm:px-4 py-1.5 sm:py-2 w-fit">
             {currentDoctor.isSubscribed ? 'Premium Account' : 'Free Account (3 patients max)'}
           </Badge>
         </div>
 
         {/* Subscription Warning */}
         {!currentDoctor.isSubscribed && patients.length >= 3 && (
-          <Alert className="mb-6 border-destructive/50 bg-destructive/5">
+          <Alert className="mb-4 sm:mb-6 border-destructive/50 bg-destructive/5">
             <AlertCircle className="h-4 w-4 text-destructive" />
-            <AlertDescription className="text-destructive">
+            <AlertDescription className="text-sm text-destructive">
               You've reached your patient limit. Contact admin to upgrade your subscription.
             </AlertDescription>
           </Alert>
         )}
 
         {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-2 mb-8">
+        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 mb-6 sm:mb-8">
           <StatsCard
             title="My Patients"
             value={patients.length}
@@ -90,22 +108,32 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
 
         {/* Tabs for Patients and Visits */}
         <Tabs defaultValue="patients" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="patients">Patients</TabsTrigger>
-            <TabsTrigger value="visits">Visit Records</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="patients" className="text-sm sm:text-base">Patients</TabsTrigger>
+            <TabsTrigger value="visits" className="text-sm sm:text-base">Visit Records</TabsTrigger>
           </TabsList>
 
           <TabsContent value="patients" className="space-y-4">
-            <div className="bg-card rounded-lg border p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold">Patient List</h3>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button disabled={!canAddMore} className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Add Patient
-                    </Button>
-                  </DialogTrigger>
+            <div className="bg-card rounded-lg border p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <h3 className="text-lg sm:text-xl font-semibold">Patient List</h3>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-64">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search patients..."
+                      value={patientSearchQuery}
+                      onChange={(e) => setPatientSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button disabled={!canAddMore} className="gap-2 w-full sm:w-auto">
+                        <Plus className="h-4 w-4" />
+                        Add Patient
+                      </Button>
+                    </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Add New Patient</DialogTitle>
@@ -133,34 +161,43 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
                       <Button type="submit" className="w-full">Add Patient</Button>
                     </form>
                   </DialogContent>
-                </Dialog>
+                  </Dialog>
+                </div>
               </div>
               
-              <div className="border rounded-lg overflow-hidden">
+              <div className="border rounded-lg overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>CNIC</TableHead>
-                      <TableHead>Added On</TableHead>
+                      <TableHead className="min-w-[150px]">Name</TableHead>
+                      <TableHead className="min-w-[200px]">Email</TableHead>
+                      <TableHead className="min-w-[120px]">Phone</TableHead>
+                      <TableHead className="min-w-[140px]">CNIC</TableHead>
+                      <TableHead className="min-w-[110px]">Added On</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {patients.map((patient) => (
-                      <TableRow key={patient.id} className="hover:bg-muted/30">
-                        <TableCell className="font-medium">{patient.name}</TableCell>
-                        <TableCell className="text-muted-foreground">{patient.email}</TableCell>
-                        <TableCell className="text-muted-foreground">{patient.phone}</TableCell>
-                        <TableCell className="text-muted-foreground font-mono text-sm">
-                          {patient.cnic}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {patient.createdAt.toLocaleDateString()}
+                    {filteredPatients.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No patients found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      filteredPatients.map((patient) => (
+                        <TableRow key={patient.id} className="hover:bg-muted/30">
+                          <TableCell className="font-medium">{patient.name}</TableCell>
+                          <TableCell className="text-muted-foreground">{patient.email}</TableCell>
+                          <TableCell className="text-muted-foreground">{patient.phone}</TableCell>
+                          <TableCell className="text-muted-foreground font-mono text-sm">
+                            {patient.cnic}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {patient.createdAt.toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </div>
@@ -168,16 +205,26 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
           </TabsContent>
 
           <TabsContent value="visits" className="space-y-4">
-            <div className="bg-card rounded-lg border p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-semibold">Visit Records</h3>
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Add Visit Record
-                    </Button>
-                  </DialogTrigger>
+            <div className="bg-card rounded-lg border p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                <h3 className="text-lg sm:text-xl font-semibold">Visit Records</h3>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-64">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search visits..."
+                      value={visitSearchQuery}
+                      onChange={(e) => setVisitSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button className="gap-2 w-full sm:w-auto">
+                        <Plus className="h-4 w-4" />
+                        Add Visit Record
+                      </Button>
+                    </DialogTrigger>
                   <DialogContent>
                     <DialogHeader>
                       <DialogTitle>Add Visit Record</DialogTitle>
@@ -205,45 +252,54 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
                       <Button type="submit" className="w-full">Save Visit Record</Button>
                     </form>
                   </DialogContent>
-                </Dialog>
+                  </Dialog>
+                </div>
               </div>
               
-              <div className="border rounded-lg overflow-hidden">
+              <div className="border rounded-lg overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/50">
-                      <TableHead>Patient</TableHead>
-                      <TableHead>Disease</TableHead>
-                      <TableHead>Medicine</TableHead>
-                      <TableHead>Visit Date</TableHead>
-                      <TableHead>Next Visit</TableHead>
+                      <TableHead className="min-w-[150px]">Patient</TableHead>
+                      <TableHead className="min-w-[120px]">Disease</TableHead>
+                      <TableHead className="min-w-[150px]">Medicine</TableHead>
+                      <TableHead className="min-w-[110px]">Visit Date</TableHead>
+                      <TableHead className="min-w-[110px]">Next Visit</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {visitRecords.map((record) => {
-                      const patient = patients.find(p => p.id === record.patientId);
-                      return (
-                        <TableRow key={record.id} className="hover:bg-muted/30">
-                          <TableCell className="font-medium">{patient?.name}</TableCell>
-                          <TableCell className="text-muted-foreground">{record.disease}</TableCell>
-                          <TableCell className="text-muted-foreground text-sm">
-                            {record.medicineGiven}
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {record.addedAt.toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            {record.nextVisit ? (
-                              <Badge variant="outline">
-                                {record.nextVisit.toLocaleDateString()}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">-</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
+                    {filteredVisitRecords.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No visit records found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredVisitRecords.map((record) => {
+                        const patient = patients.find(p => p.id === record.patientId);
+                        return (
+                          <TableRow key={record.id} className="hover:bg-muted/30">
+                            <TableCell className="font-medium">{patient?.name}</TableCell>
+                            <TableCell className="text-muted-foreground">{record.disease}</TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {record.medicineGiven}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {record.addedAt.toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              {record.nextVisit ? (
+                                <Badge variant="outline" className="whitespace-nowrap">
+                                  {record.nextVisit.toLocaleDateString()}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">-</span>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
                   </TableBody>
                 </Table>
               </div>
