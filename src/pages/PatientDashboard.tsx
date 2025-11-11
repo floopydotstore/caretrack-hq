@@ -16,6 +16,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Card } from '@/components/ui/card';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { PatientSidebar } from '@/components/sidebar/PatientSidebar';
 
 interface PatientDashboardProps {
   user: User;
@@ -24,6 +26,7 @@ interface PatientDashboardProps {
 
 export default function PatientDashboard({ user, onLogout }: PatientDashboardProps) {
   const [searchDate, setSearchDate] = useState('');
+  const [activeSection, setActiveSection] = useState('overview');
   
   // Find current patient
   const currentPatient = mockPatients.find(p => p.email === user.email) || mockPatients[0];
@@ -44,87 +47,102 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
   ).length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header user={user} onLogout={onLogout} />
-      
-      <main className="container mx-auto px-6 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">My Medical Records</h2>
-          <p className="text-muted-foreground">
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <PatientSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+        
+        <div className="flex-1 flex flex-col">
+          <header className="h-14 border-b flex items-center px-4 bg-card">
+            <SidebarTrigger />
+            <div className="flex-1" />
+            <Header user={user} onLogout={onLogout} />
+          </header>
+
+          <main className="flex-1 container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-2">My Medical Records</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             View your visit history and upcoming appointments
           </p>
         </div>
 
-        {/* Patient Info Card */}
-        <Card className="p-6 mb-8 bg-gradient-card">
-          <h3 className="text-lg font-semibold mb-4">Patient Information</h3>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-            <div>
-              <p className="text-muted-foreground">Name</p>
-              <p className="font-medium">{currentPatient.name}</p>
+        {/* Overview Section */}
+        {activeSection === 'overview' && (
+          <>
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 mb-6 sm:mb-8">
+              <StatsCard
+                title="Total Visits"
+                value={allVisitRecords.length}
+                icon={FileText}
+                description="All medical consultations"
+              />
+              <StatsCard
+                title="Upcoming Visits"
+                value={upcomingVisits}
+                icon={Calendar}
+                description="Scheduled appointments"
+              />
             </div>
-            <div>
-              <p className="text-muted-foreground">Email</p>
-              <p className="font-medium">{currentPatient.email}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">Phone</p>
-              <p className="font-medium">{currentPatient.phone}</p>
-            </div>
-            <div>
-              <p className="text-muted-foreground">CNIC</p>
-              <p className="font-medium font-mono">{currentPatient.cnic}</p>
-            </div>
-          </div>
-        </Card>
+          </>
+        )}
 
-        {/* Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-2 mb-8">
-          <StatsCard
-            title="Total Visits"
-            value={allVisitRecords.length}
-            icon={FileText}
-            description="All medical consultations"
-          />
-          <StatsCard
-            title="Upcoming Visits"
-            value={upcomingVisits}
-            icon={Calendar}
-            description="Scheduled appointments"
-          />
-        </div>
-
-        {/* Search and Records */}
-        <div className="bg-card rounded-lg border p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl font-semibold">Visit History</h3>
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <div className="space-y-1">
-                <Label htmlFor="date-search" className="sr-only">Search by date</Label>
-                <Input
-                  id="date-search"
-                  type="date"
-                  value={searchDate}
-                  onChange={(e) => setSearchDate(e.target.value)}
-                  className="w-48"
-                  placeholder="Search by date"
-                />
+        {/* Profile Section */}
+        {activeSection === 'profile' && (
+          <Card className="p-4 sm:p-6 bg-gradient-card">
+            <h3 className="text-base sm:text-lg font-semibold mb-4">Patient Information</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Name</p>
+                <p className="font-medium">{currentPatient.name}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Email</p>
+                <p className="font-medium">{currentPatient.email}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Phone</p>
+                <p className="font-medium">{currentPatient.phone}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">CNIC</p>
+                <p className="font-medium font-mono">{currentPatient.cnic}</p>
               </div>
             </div>
-          </div>
+          </Card>
+        )}
 
-          <div className="border rounded-lg overflow-hidden">
+        {/* Medical Records Section */}
+        {activeSection === 'records' && (
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
+              <h3 className="text-lg sm:text-xl font-semibold">Visit History</h3>
+              <div className="flex items-center gap-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <div className="space-y-1">
+                  <Label htmlFor="date-search" className="sr-only">Search by date</Label>
+                  <Input
+                    id="date-search"
+                    type="date"
+                    value={searchDate}
+                    onChange={(e) => setSearchDate(e.target.value)}
+                    className="w-full sm:w-48"
+                    placeholder="Search by date"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="border rounded-lg overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/50">
-                  <TableHead>Visit Date</TableHead>
-                  <TableHead>Disease/Condition</TableHead>
-                  <TableHead>Medicine Prescribed</TableHead>
-                  <TableHead>Doctor</TableHead>
-                  <TableHead>Next Visit</TableHead>
-                </TableRow>
-              </TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="min-w-[120px]">Visit Date</TableHead>
+                    <TableHead className="min-w-[150px]">Disease/Condition</TableHead>
+                    <TableHead className="min-w-[200px]">Medicine Prescribed</TableHead>
+                    <TableHead className="min-w-[120px]">Doctor</TableHead>
+                    <TableHead className="min-w-[120px]">Next Visit</TableHead>
+                  </TableRow>
+                </TableHeader>
               <TableBody>
                 {filteredRecords.length === 0 ? (
                   <TableRow>
@@ -163,10 +181,13 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
                   })
                 )}
               </TableBody>
-            </Table>
+              </Table>
+            </div>
           </div>
+        )}
+          </main>
         </div>
-      </main>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }

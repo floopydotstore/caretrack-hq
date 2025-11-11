@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/table';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AdminSidebar } from '@/components/sidebar/AdminSidebar';
 
 interface AdminDashboardProps {
   user: User;
@@ -25,6 +27,7 @@ interface AdminDashboardProps {
 export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const [doctors, setDoctors] = useState(mockDoctors);
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeSection, setActiveSection] = useState('overview');
 
   const handleToggleSubscription = (doctorId: string) => {
     setDoctors(prev =>
@@ -48,10 +51,18 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
   const subscribedDoctors = doctors.filter(d => d.isSubscribed).length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header user={user} onLogout={onLogout} />
-      
-      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AdminSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
+        
+        <div className="flex-1 flex flex-col">
+          <header className="h-14 border-b flex items-center px-4 bg-card">
+            <SidebarTrigger />
+            <div className="flex-1" />
+            <Header user={user} onLogout={onLogout} />
+          </header>
+
+          <main className="flex-1 container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="mb-6 sm:mb-8">
           <h2 className="text-2xl sm:text-3xl font-bold mb-2">Admin Dashboard</h2>
           <p className="text-sm sm:text-base text-muted-foreground">
@@ -59,8 +70,10 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
           </p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mb-6 sm:mb-8">
+        {/* Overview Section */}
+        {activeSection === 'overview' && (
+          <>
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 mb-6 sm:mb-8">
           <StatsCard
             title="Total Doctors"
             value={totalDoctors}
@@ -79,9 +92,13 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
             icon={Activity}
             description={`${totalDoctors - subscribedDoctors} inactive`}
           />
-        </div>
+            </div>
+          </>
+        )}
 
-        {/* Doctors Table */}
+        {/* Doctors Section */}
+        {activeSection === 'doctors' && (
+          <>
         <div className="bg-card rounded-lg border p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
             <h3 className="text-lg sm:text-xl font-semibold">Doctor Management</h3>
@@ -145,8 +162,48 @@ export default function AdminDashboard({ user, onLogout }: AdminDashboardProps) 
               </TableBody>
             </Table>
           </div>
+            </div>
+          </>
+        )}
+
+        {/* Patients Section */}
+        {activeSection === 'patients' && (
+          <div className="bg-card rounded-lg border p-4 sm:p-6">
+            <h3 className="text-lg sm:text-xl font-semibold mb-4">All Patients</h3>
+            <div className="border rounded-lg overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/50">
+                    <TableHead className="min-w-[150px]">Name</TableHead>
+                    <TableHead className="min-w-[200px]">Email</TableHead>
+                    <TableHead className="min-w-[120px]">Phone</TableHead>
+                    <TableHead className="min-w-[140px]">CNIC</TableHead>
+                    <TableHead className="min-w-[150px]">Doctor</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mockPatients.map((patient) => {
+                    const doctor = mockDoctors.find(d => d.id === patient.doctorId);
+                    return (
+                      <TableRow key={patient.id} className="hover:bg-muted/30">
+                        <TableCell className="font-medium">{patient.name}</TableCell>
+                        <TableCell className="text-muted-foreground">{patient.email}</TableCell>
+                        <TableCell className="text-muted-foreground">{patient.phone}</TableCell>
+                        <TableCell className="text-muted-foreground font-mono text-sm">
+                          {patient.cnic}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{doctor?.name}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+          </main>
         </div>
-      </main>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 }

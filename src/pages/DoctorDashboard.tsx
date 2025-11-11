@@ -26,7 +26,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { DoctorSidebar } from '@/components/sidebar/DoctorSidebar';
 
 interface DoctorDashboardProps {
   user: User;
@@ -43,6 +44,7 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
   );
   const [patientSearchQuery, setPatientSearchQuery] = useState('');
   const [visitSearchQuery, setVisitSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState('overview');
 
   const canAddMore = currentDoctor.isSubscribed || patients.length < 3;
   const totalVisits = visitRecords.length;
@@ -64,10 +66,18 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
   });
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header user={user} onLogout={onLogout} />
-      
-      <main className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <DoctorSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+        
+        <div className="flex-1 flex flex-col">
+          <header className="h-14 border-b flex items-center px-4 bg-card">
+            <SidebarTrigger />
+            <div className="flex-1" />
+            <Header user={user} onLogout={onLogout} />
+          </header>
+
+          <main className="flex-1 container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold mb-2">Doctor Dashboard</h2>
@@ -80,40 +90,38 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
           </Badge>
         </div>
 
-        {/* Subscription Warning */}
-        {!currentDoctor.isSubscribed && patients.length >= 3 && (
-          <Alert className="mb-4 sm:mb-6 border-destructive/50 bg-destructive/5">
-            <AlertCircle className="h-4 w-4 text-destructive" />
-            <AlertDescription className="text-sm text-destructive">
-              You've reached your patient limit. Contact admin to upgrade your subscription.
-            </AlertDescription>
-          </Alert>
+        {/* Overview Section */}
+        {activeTab === 'overview' && (
+          <>
+            {!currentDoctor.isSubscribed && patients.length >= 3 && (
+              <Alert className="mb-4 sm:mb-6 border-destructive/50 bg-destructive/5">
+                <AlertCircle className="h-4 w-4 text-destructive" />
+                <AlertDescription className="text-sm text-destructive">
+                  You've reached your patient limit. Contact admin to upgrade your subscription.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 mb-6 sm:mb-8">
+              <StatsCard
+                title="My Patients"
+                value={patients.length}
+                icon={Users}
+                description={!currentDoctor.isSubscribed ? `${3 - patients.length} slots remaining` : 'Unlimited'}
+              />
+              <StatsCard
+                title="Total Visits"
+                value={totalVisits}
+                icon={FileText}
+                description="All patient visits"
+              />
+            </div>
+          </>
         )}
 
-        {/* Stats Cards */}
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 mb-6 sm:mb-8">
-          <StatsCard
-            title="My Patients"
-            value={patients.length}
-            icon={Users}
-            description={!currentDoctor.isSubscribed ? `${3 - patients.length} slots remaining` : 'Unlimited'}
-          />
-          <StatsCard
-            title="Total Visits"
-            value={totalVisits}
-            icon={FileText}
-            description="All patient visits"
-          />
-        </div>
-
-        {/* Tabs for Patients and Visits */}
-        <Tabs defaultValue="patients" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="patients" className="text-sm sm:text-base">Patients</TabsTrigger>
-            <TabsTrigger value="visits" className="text-sm sm:text-base">Visit Records</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="patients" className="space-y-4">
+        {/* Patients Section */}
+        {activeTab === 'patients' && (
+          <>
             <div className="bg-card rounded-lg border p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <h3 className="text-lg sm:text-xl font-semibold">Patient List</h3>
@@ -202,9 +210,12 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
                 </Table>
               </div>
             </div>
-          </TabsContent>
+          </>
+        )}
 
-          <TabsContent value="visits" className="space-y-4">
+        {/* Visit Records Section */}
+        {activeTab === 'visits' && (
+          <>
             <div className="bg-card rounded-lg border p-4 sm:p-6">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
                 <h3 className="text-lg sm:text-xl font-semibold">Visit Records</h3>
@@ -304,9 +315,11 @@ export default function DoctorDashboard({ user, onLogout }: DoctorDashboardProps
                 </Table>
               </div>
             </div>
-          </TabsContent>
-        </Tabs>
-      </main>
-    </div>
+          </>
+        )}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }
