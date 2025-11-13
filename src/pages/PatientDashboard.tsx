@@ -58,13 +58,14 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
             <Header user={user} onLogout={onLogout} />
           </header>
 
-          <main className="flex-1 container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-2">My Medical Records</h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            View your visit history and upcoming appointments
-          </p>
-        </div>
+          <main className="flex-1 overflow-x-hidden">
+            <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+              <div className="mb-6 sm:mb-8">
+                <h2 className="text-2xl sm:text-3xl font-bold mb-2">My Medical Records</h2>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  View your visit history and upcoming appointments
+                </p>
+              </div>
 
         {/* Overview Section */}
         {activeSection === 'overview' && (
@@ -114,25 +115,26 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
         {/* Medical Records Section */}
         {activeSection === 'records' && (
           <div className="bg-card rounded-lg border p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 sm:mb-6">
+            <div className="flex flex-col gap-4 mb-4 sm:mb-6">
               <h3 className="text-lg sm:text-xl font-semibold">Visit History</h3>
               <div className="flex items-center gap-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <div className="space-y-1">
+                <Search className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div className="flex-1">
                   <Label htmlFor="date-search" className="sr-only">Search by date</Label>
                   <Input
                     id="date-search"
                     type="date"
                     value={searchDate}
                     onChange={(e) => setSearchDate(e.target.value)}
-                    className="w-full sm:w-48"
+                    className="w-full"
                     placeholder="Search by date"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="border rounded-lg overflow-x-auto">
+            <div className="border rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                   <TableRow className="bg-muted/50">
@@ -182,9 +184,11 @@ export default function PatientDashboard({ user, onLogout }: PatientDashboardPro
                 )}
               </TableBody>
               </Table>
+              </div>
             </div>
           </div>
         )}
+            </div>
           </main>
         </div>
       </div>
