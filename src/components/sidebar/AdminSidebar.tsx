@@ -26,7 +26,7 @@ export function AdminSidebar({ activeSection, onSectionChange }: AdminSidebarPro
   const { open } = useSidebar();
 
   return (
-    <Sidebar className={open ? 'w-60' : 'w-14'} collapsible="icon">
+    <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className={!open ? 'sr-only' : ''}>
